@@ -1,4 +1,4 @@
-import { ArrowRight, Coffee, Leaf, Sparkles } from 'lucide-react';
+import { ArrowRight, Bean, Coffee, Flame } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { brandingService } from '../../services/brandingService';
@@ -27,18 +27,19 @@ export default function StoryPage() {
         />
         <div />
         <div className="story-hero-copy">
-          <span className="lux-eyebrow">THE AURELIS STORY · EST. 2020</span>
+          <span className="lux-eyebrow">DI SẢN AURELIS | EST. 2026</span>
           <h1 className="brand-display">
-            Good things
+            Nghệ thuật
             <br />
-            <em>take time.</em>
+            <em>của sự kiên nhẫn.</em>
           </h1>
           <p>
-            Một tách cà phê ngon là lời nhắc dịu dàng rằng những điều đáng quý luôn cần được chăm
-            chút.
+            Chúng tôi tin rằng những tuyệt tác đích thực không bao giờ sinh ra từ sự vội vã. Mỗi
+            tách cà phê tại Aurelis là một minh chứng cho sự tỉ mỉ, lòng đam mê và nghệ thuật vinh
+            danh những giá trị nguyên bản.
           </p>
           <a className="lux-button lux-button-light" href="#our-belief">
-            Câu chuyện của chúng tôi <ArrowRight size={16} />
+            Khám phá hành trình <ArrowRight size={16} />
           </a>
         </div>
         <span className="story-hero-note">FROM VIETNAM, WITH CARE</span>
@@ -51,7 +52,7 @@ export default function StoryPage() {
           <em>Nhường chỗ cho tinh hoa.</em>
         </h2>
         <p>
-          KAurelis không đơn thuần phục vụ cà phê, chúng tôi kiến tạo những khoảnh khắc vô giá. Mọi
+          Aurelis không đơn thuần phục vụ cà phê, chúng tôi kiến tạo những khoảnh khắc vô giá. Mọi
           sự hối hả đều dừng lại sau cánh cửa, chỉ còn lại nghệ thuật thủ công tỉ mỉ và những dải
           hương nguyên bản được đánh thức trọn vẹn bằng cả trái tim.
         </p>
@@ -69,47 +70,48 @@ export default function StoryPage() {
             alt="Một tách cà phê được pha thủ công"
             loading="lazy"
           />
-          <span>THE ART OF SLOW COFFEE</span>
+          <span>THE ART OF LINGERING </span>
         </div>
         <div className="story-craft-copy">
-          <span className="lux-eyebrow">TỪ HẠT ĐẾN TÁCH</span>
+          <span className="lux-eyebrow">HÀNH TRÌNH TINH HOA</span>
           <h2 className="brand-display">
-            Tỉ mỉ trong từng
+            Tuyệt tác sinh ra
             <br />
-            <em>điều giản dị.</em>
+            <em>từ sự tỉ mỉ.</em>
           </h2>
           <div className="story-value">
             <span>
-              <Coffee />
+              <Bean strokeWidth={1.6} />
             </span>
             <div>
-              <h3>Hạt có nguồn gốc</h3>
+              <h3>Cội nguồn tinh túy</h3>
               <p>
-                Chúng tôi tìm kiếm những vùng trồng và mùa vụ mang hương vị riêng, để mỗi lựa chọn
-                đều có lý do.
+                Viễn du qua những vùng đất trứ danh, chúng tôi khắt khe chắt lọc từng hạt cà phê
+                mang đậm hơi thở của tự nhiên và thổ nhưỡng.
               </p>
             </div>
           </div>
           <div className="story-value">
             <span>
-              <Sparkles />
+              <Flame strokeWidth={1.6} />
             </span>
             <div>
-              <h3>Rang vừa đủ</h3>
+              <h3>Nghệ thuật rang xay</h3>
               <p>
-                Hương vị được mở ra bằng sự cân bằng — giữ lại nét tự nhiên của hạt và chiều sâu
-                trong từng ngụm.
+                Đánh thức linh hồn của hạt bằng kỹ thuật kiểm soát nhiệt độ bậc thầy, tôn vinh trọn
+                vẹn nét thanh tao nguyên bản và chiều sâu trong từng nốt hương.
               </p>
             </div>
           </div>
           <div className="story-value">
             <span>
-              <Leaf />
+              <Coffee strokeWidth={1.6} />
             </span>
             <div>
-              <h3>Pha bằng sự chú tâm</h3>
+              <h3>Chiết xuất từ tâm</h3>
               <p>
-                Từng công đoạn nhỏ được làm cẩn thận, để khoảnh khắc bạn thưởng thức luôn trọn vẹn.
+                Mọi thao tác pha chế đều là một nghi thức chuyên tâm tuyệt đối, để khoảnh khắc bạn
+                nâng tách lên luôn là một trải nghiệm vẹn tròn.
               </p>
             </div>
           </div>
@@ -118,12 +120,12 @@ export default function StoryPage() {
       <section className="story-quote">
         <span>OUR PROMISE</span>
         <p className="brand-display">
-          “Một khoảng lặng mang tên cà phê.
+          “Xa xỉ lớn nhất là sự thảnh thơi,
           <br />
-          <em>Một khoảnh khắc dành riêng cho bạn.”</em>
+          <em>Trọn vẹn nhất là khoảnh khắc của chính bạn.”</em>
         </p>
         <Link to="/stores">
-          Ghé thăm không gian Aurelis <ArrowRight size={15} />
+          Ghé thăm chốn dừng chân <ArrowRight size={15} />
         </Link>
       </section>
     </div>

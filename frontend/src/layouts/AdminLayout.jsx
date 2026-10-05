@@ -60,7 +60,7 @@ export default function AdminLayout() {
           { title: 'Quản trị', items: [['/admin/users', 'Quản lý người dùng', UserRoundCog]] },
           ...sections.slice(1),
         ]
-      : sections;
+      : sections.filter((section) => section.title !== 'Danh mục');
   const nav = (
     <>
       <BrandLogo light />
@@ -89,8 +89,8 @@ export default function AdminLayout() {
     </>
   );
   return (
-    <div className="min-h-screen bg-[#f5f2ec] text-charcoal">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 overflow-y-auto border-r border-black/5 bg-espresso p-5 pb-8 text-white lg:block">
+    <div className="admin-workspace min-h-screen bg-[#f5f2ec] text-charcoal">
+      <aside className="admin-sidebar fixed inset-y-0 left-0 z-40 hidden w-64 overflow-y-auto border-r border-black/5 bg-espresso p-5 pb-8 text-white lg:block">
         {nav}
       </aside>
       {menuOpen && (
@@ -100,7 +100,7 @@ export default function AdminLayout() {
             aria-label="Đóng menu"
             onClick={() => setMenuOpen(false)}
           />
-          <aside className="relative h-full w-[min(20rem,85vw)] overflow-y-auto bg-espresso p-5 text-white">
+          <aside className="admin-sidebar relative h-full w-[min(20rem,85vw)] overflow-y-auto bg-espresso p-5 text-white">
             <div className="mb-4 flex justify-end">
               <button aria-label="Đóng menu" onClick={() => setMenuOpen(false)}>
                 <X />
@@ -110,8 +110,8 @@ export default function AdminLayout() {
           </aside>
         </div>
       )}
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-black/5 bg-white/90 px-5 py-4 backdrop-blur lg:px-8">
+      <div className="admin-shell lg:pl-64">
+        <header className="admin-topbar sticky top-0 z-30 flex items-center justify-between border-b border-black/5 bg-white/90 px-5 py-4 backdrop-blur lg:px-8">
           <div className="flex items-center gap-3">
             <button aria-label="Mở menu" className="lg:hidden" onClick={() => setMenuOpen(true)}>
               <Menu />
@@ -140,7 +140,7 @@ export default function AdminLayout() {
             </button>
           </div>
         </header>
-        <main className="p-5 lg:p-8">
+        <main className="admin-main p-5 lg:p-8">
           <PageTransition>
             <Outlet />
           </PageTransition>

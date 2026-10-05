@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Clock3,
   Coffee,
+  ClipboardList,
   Mail,
   MapPin,
   Menu,
@@ -13,8 +14,8 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import BrandLogo from '../components/common/BrandLogo';
 import PageTransition from '../components/common/PageTransition';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +32,7 @@ const links = [
 export default function CustomerLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const cart = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const accountPath =
@@ -45,6 +47,10 @@ export default function CustomerLayout() {
             : '/login';
   const closeMenu = () => setMenuOpen(false);
   const linkClass = ({ isActive }) => `aurelis-nav-link${isActive ? ' is-active' : ''}`;
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
 
   return (
     <div className="aurelis-site">
@@ -101,6 +107,9 @@ export default function CustomerLayout() {
                   <Link to="/account">
                     <UserRound size={15} /> Hồ sơ cá nhân
                   </Link>
+                  <Link to="/orders">
+                    <ClipboardList size={15} /> Theo dõi đơn hàng
+                  </Link>
                   <Link to="/menu?favorites=1">
                     <Heart size={15} /> Yêu thích
                   </Link>
@@ -141,6 +150,9 @@ export default function CustomerLayout() {
             </Link>
             {user?.role === 'CUSTOMER' && (
               <>
+                <Link to="/orders" className="aurelis-mobile-account" onClick={closeMenu}>
+                  <ClipboardList size={16} /> Theo dõi đơn hàng <ArrowRight size={15} />
+                </Link>
                 <Link to="/menu?favorites=1" className="aurelis-mobile-account" onClick={closeMenu}>
                   <Heart size={16} /> Yêu thích <ArrowRight size={15} />
                 </Link>
@@ -170,15 +182,19 @@ export default function CustomerLayout() {
       </main>
       <footer className="aurelis-footer">
         <div className="aurelis-footer-top">
+          <div className="aurelis-footer-watermark" aria-hidden="true">
+            <BrandLogo light compact imageOnly />
+          </div>
           <div className="aurelis-footer-inner">
             <section className="aurelis-footer-brand">
+              <span className="aurelis-footer-brand-kicker">A MOMENT OF AURELIS</span>
               <Link to="/" aria-label="Aurelis Coffee — Trang chủ">
                 <BrandLogo light />
               </Link>
               <div className="aurelis-footer-rule" />
               <p>
-                Một tách cà phê được chăm chút. Một không gian đủ yên. Và một khoảnh khắc dành riêng
-                cho bạn.
+                Tách cà phê đượm tâm ý. Không gian ngưng đọng thời gian. Và một chốn an yên thuộc về
+                riêng bạn.
               </p>
               <div className="aurelis-footer-social">
                 <a href="mailto:hello@aureliscoffee.com" aria-label="Gửi email">
@@ -192,26 +208,26 @@ export default function CustomerLayout() {
             <section className="aurelis-footer-column">
               <span className="aurelis-footer-eyebrow">KHÁM PHÁ</span>
               <h2>
-                Chọn một điều
+                Chạm vào
                 <br />
-                bạn yêu thích.
+                hương vị tinh hoa.
               </h2>
               <Link to="/menu">
                 Thực đơn <ArrowRight size={14} />
               </Link>
               <Link to="/story">
-                Câu chuyện Aurelis <ArrowRight size={14} />
+                Câu chuyện <ArrowRight size={14} />
               </Link>
               <Link to="/stores">
                 Không gian của chúng tôi <ArrowRight size={14} />
               </Link>
             </section>
             <section className="aurelis-footer-column">
-              <span className="aurelis-footer-eyebrow">GẶP GỠ</span>
+              <span className="aurelis-footer-eyebrow">ĐIỂM HẸN</span>
               <h2>
-                Luôn có chỗ
+                Nơi thời gian
                 <br />
-                cho bạn.
+                chờ đợi bạn.
               </h2>
               <Link to="/stores">
                 Tìm cửa hàng <ArrowRight size={14} />
@@ -228,9 +244,9 @@ export default function CustomerLayout() {
               <div className="aurelis-footer-contact-block">
                 <MapPin size={17} />
                 <p>
-                  Không gian cà phê
+                  Nơi trú ẩn bình yên,
                   <br />
-                  dành cho những khoảnh khắc chậm.
+                  tôn vinh nghệ thuật sống chậm.
                 </p>
               </div>
               <div className="aurelis-footer-contact-block">

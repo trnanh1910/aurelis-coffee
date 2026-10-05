@@ -36,7 +36,12 @@ export default function CartPage() {
         branchId: Number(branchId),
         orderType: 'TAKEAWAY',
         note: note.trim() || undefined,
-        items: cart.items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+        items: cart.items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          sizeId: item.sizeId || undefined,
+          addonIds: item.addonIds || [],
+        })),
       });
       cart.clear();
       setCompleted(order);
@@ -94,7 +99,7 @@ export default function CartPage() {
                   </div>
                   <div className="cart-item-details">
                     <h3>{item.name}</h3>
-                    <span>Thức uống Aurelis</span>
+                    <span>{[item.sizeName, ...(item.addonNames || [])].filter(Boolean).join(' · ') || 'Thức uống Aurelis'}</span>
                     <strong>{money(item.price)}</strong>
                     <div className="cart-quantity">
                       <button

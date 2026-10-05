@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { brandingService } from '../../services/brandingService';
 
-export default function BrandLogo({ light = false, compact = false }) {
+export default function BrandLogo({ light = false, compact = false, imageOnly = false }) {
   const [imageUrl, setImageUrl] = useState(null);
 
   useEffect(() => {
@@ -49,6 +49,8 @@ export default function BrandLogo({ light = false, compact = false }) {
       </div>
     );
   }
+
+  if (imageOnly) return null;
 
   return (
     <div className="flex items-center gap-3">

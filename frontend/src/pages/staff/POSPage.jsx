@@ -5,6 +5,7 @@ import {
   Minus,
   Plus,
   Printer,
+  Pencil,
   Search,
   ShoppingCart,
   Trash2,
@@ -42,6 +43,7 @@ export default function POSPage() {
     [cart, setCart] = useState([]),
     [voucher, setVoucher] = useState(''),
     [custom, setCustom] = useState(null),
+    [editingKey, setEditingKey] = useState(null),
     [customData, setCustomData] = useState({
       sizeId: null,
       sugarLevel: '100',
@@ -53,15 +55,19 @@ export default function POSPage() {
     [payOpen, setPayOpen] = useState(false),
     [payMethod, setPayMethod] = useState('CASH'),
     [lastOrder, setLastOrder] = useState(null),
-    [loading, setLoading] = useState(false);
+    [loading, setLoading] = useState(false),
+    [productsLoading, setProductsLoading] = useState(false);
   useEffect(() => {
-    Promise.all([api.get('/categories'), branchService.list()]).then(([c, b]) => {
-      setCategories(c.data.data);
-      setBranches(b);
-      if (!branchId && b[0]) setBranchId(String(b[0].id));
-    });
+    Promise.all([api.get('/categories'), branchService.list()])
+      .then(([c, b]) => {
+        setCategories(c.data.data);
+        setBranches(b);
+        if (!branchId && b[0]) setBranchId(String(b[0].id));
+      })
+      .catch(() => message.error('Chưa thể tải danh mục hoặc danh sách chi nhánh.'));
   }, []);
   useEffect(() => {
+    setProductsLoading(true);
     api
       .get('/products', {
         params: {
@@ -71,7 +77,12 @@ export default function POSPage() {
           status: 'ACTIVE',
         },
       })
-      .then((r) => setProducts(r.data.data));
+      .then((r) => setProducts(r.data.data))
+      .catch(() => {
+        setProducts([]);
+        message.error('Chưa thể tải thực đơn. Vui lòng thử lại.');
+      })
+      .finally(() => setProductsLoading(false));
   }, [category, search]);
   useEffect(() => {
     if (branchId) tableService.list({ branchId, status: 'AVAILABLE' }).then(setTables);
@@ -80,6 +91,7 @@ export default function POSPage() {
     try {
       const d = (await api.get(`/products/${p.id}`)).data.data;
       setCustom(d);
+      setEditingKey(null);
       setCustomData({
         sizeId: d.sizes?.[0]?.id || null,
         sugarLevel: '100',
@@ -92,17 +104,29 @@ export default function POSPage() {
       message.error(e.response?.data?.message || 'Không thể tải thông tin sản phẩm');
     }
   };
+  const editCartItem = async (item) => {
+    try {
+      const d = (await api.get(`/products/${item.productId}`)).data.data;
+      setCustom(d);
+      setEditingKey(item.key);
+      setCustomData({
+        sizeId: item.sizeId || d.sizes?.[0]?.id || null,
+        sugarLevel: String(item.sugarLevel ?? '100'),
+        iceLevel: item.iceLevel || 'NORMAL',
+        addonIds: item.addonIds || [],
+        quantity: item.quantity || 1,
+        note: item.note || '',
+      });
+    } catch (e) {
+      message.error(e.response?.data?.message || 'Không thể tải lựa chọn của món này.');
+    }
+  };
   const addItem = () => {
     if (!custom) return;
-    const size = custom.sizes?.find((s) => s.id === customData.sizeId);
-    const addons = (custom.addons || []).filter((a) => customData.addonIds.includes(a.id));
-    const unit =
-      Number(custom.base_price) +
-      Number(size?.extra_price || 0) +
-      addons.reduce((n, a) => n + Number(a.price), 0);
-    setCart((x) => [
-      ...x,
-      {
+    const size = selectedSize;
+    const addons = selectedAddons;
+    const unit = customUnitPrice;
+    const nextItem = {
         key: uid(),
         productId: custom.id,
         name: custom.name,
@@ -116,10 +140,26 @@ export default function POSPage() {
         quantity: Number(customData.quantity || 1),
         note: customData.note,
         unitPrice: unit,
-      },
-    ]);
+      };
+    if (editingKey) {
+      nextItem.key = editingKey;
+      setCart((items) => items.map((item) => item.key === editingKey ? nextItem : item));
+      message.success('Đã cập nhật tùy chọn món trong đơn.');
+    } else {
+      setCart((items) => [...items, nextItem]);
+    }
+    setEditingKey(null);
     setCustom(null);
   };
+  const selectedSize = custom?.sizes?.find((size) => String(size.id) === String(customData.sizeId));
+  const selectedAddons = (custom?.addons || []).filter((addon) =>
+    customData.addonIds.some((id) => String(id) === String(addon.id)),
+  );
+  const customUnitPrice =
+    Number(custom?.base_price || 0) +
+    Number(selectedSize?.extra_price || 0) +
+    selectedAddons.reduce((total, addon) => total + Number(addon.price || 0), 0);
+  const customTotalPrice = customUnitPrice * Number(customData.quantity || 1);
   const subtotal = useMemo(() => cart.reduce((n, i) => n + i.unitPrice * i.quantity, 0), [cart]);
   const changeQty = (key, d) =>
     setCart((x) =>
@@ -196,8 +236,8 @@ export default function POSPage() {
     }
   };
   return (
-    <div className="min-h-screen bg-[#f3efe8] text-charcoal">
-      <header className="flex h-16 items-center justify-between border-b border-black/5 bg-white px-4">
+    <div className="cashier-pos min-h-screen bg-[#f3efe8] text-charcoal">
+      <header className="cashier-header flex h-16 items-center justify-between border-b border-black/5 bg-white px-4">
         <div className="flex items-center gap-5">
           <BrandLogo />
           <div className="hidden h-7 w-px bg-black/10 md:block" />
@@ -227,14 +267,14 @@ export default function POSPage() {
           </button>
         </div>
       </header>
-      <div className="grid min-h-[calc(100vh-64px)] lg:grid-cols-[170px_1fr_390px]">
-        <aside className="hidden border-r border-black/5 bg-white p-3 lg:block">
+      <div className="cashier-layout grid min-h-[calc(100vh-64px)] lg:grid-cols-[170px_1fr_390px]">
+        <aside className="cashier-category-sidebar hidden border-r border-black/5 bg-white p-3 lg:block">
           <div className="px-3 pb-3 pt-2 text-[10px] font-bold uppercase tracking-[.18em] text-charcoal/35">
             Danh mục
           </div>
           <button
             onClick={() => setCategory('')}
-            className={`mb-1 w-full rounded-xl px-3 py-3 text-left text-sm ${!category ? 'bg-espresso text-white' : 'hover:bg-[#f6f2ec]'}`}
+            className={`cashier-category-button mb-1 w-full rounded-xl px-3 py-3 text-left text-sm ${!category ? 'is-active bg-espresso text-white' : 'hover:bg-[#f6f2ec]'}`}
           >
             Tất cả món
           </button>
@@ -242,13 +282,13 @@ export default function POSPage() {
             <button
               key={c.id}
               onClick={() => setCategory(String(c.id))}
-              className={`mb-1 w-full rounded-xl px-3 py-3 text-left text-sm ${category === String(c.id) ? 'bg-espresso text-white' : 'hover:bg-[#f6f2ec]'}`}
+              className={`cashier-category-button mb-1 w-full rounded-xl px-3 py-3 text-left text-sm ${category === String(c.id) ? 'is-active bg-espresso text-white' : 'hover:bg-[#f6f2ec]'}`}
             >
               {categoryLabel(c.name)}
             </button>
           ))}
         </aside>
-        <main className="min-w-0 p-4 md:p-5">
+        <main className="cashier-catalog min-w-0 p-4 md:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="brand-display text-2xl text-espresso">Tạo đơn hàng</h1>
@@ -256,7 +296,7 @@ export default function POSPage() {
                 Chọn món, tùy chỉnh và gửi đơn đến quầy pha chế.
               </p>
             </div>
-            <label className="flex w-full items-center gap-2 rounded-xl bg-white px-4 shadow-sm sm:w-72">
+            <label className="cashier-search flex w-full items-center gap-2 rounded-xl bg-white px-4 shadow-sm sm:w-72">
               <Search size={16} />
               <input
                 value={search}
@@ -266,35 +306,35 @@ export default function POSPage() {
               />
             </label>
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {products.map((p) => (
+          <div className="cashier-mobile-categories lg:hidden">
+            <button className={!category ? 'is-active' : ''} onClick={() => setCategory('')}>Tất cả</button>
+            {categories.map((c) => <button key={c.id} className={category === String(c.id) ? 'is-active' : ''} onClick={() => setCategory(String(c.id))}>{categoryLabel(c.name)}</button>)}
+          </div>
+          <div className="cashier-product-grid mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+            {productsLoading && Array.from({ length: 8 }, (_, index) => <div className="cashier-product-skeleton" key={index}><i /><span /><b /></div>)}
+            {!productsLoading && products.map((p) => (
               <button
                 key={p.id}
                 onClick={() => openProduct(p)}
-                className="overflow-hidden rounded-2xl border border-black/5 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                className="cashier-product-card overflow-hidden rounded-2xl border border-black/5 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
               >
-                <div className="grid h-28 place-items-center bg-[#eee6da]">
-                  {p.image ? (
-                    <img
-                      src={p.image.startsWith('http') ? p.image : `http://localhost:5000${p.image}`}
-                      className="h-full w-full object-cover"
-                      alt={productLabel(p.name)}
-                    />
-                  ) : (
-                    <Coffee size={35} className="text-coffee/45" />
-                  )}
+                <div className="cashier-product-visual">
+                  <span className="cashier-product-kicker">{categoryLabel(p.category_name) || 'AURELIS SELECTION'}</span>
+                  <span className="cashier-product-index">{String(p.id).padStart(2, '0')}</span>
+                  <span className="cashier-card-add"><Plus size={15} /></span>
                 </div>
-                <div className="p-3">
+                <div className="cashier-product-info p-3">
                   <div className="line-clamp-1 font-semibold text-espresso">
                     {productLabel(p.name)}
                   </div>
-                  <div className="mt-1 text-sm font-bold text-coffee">{money(p.base_price)}</div>
+                  <div className="cashier-product-price"><span>Giá cơ bản</span><strong>{money(p.base_price)}</strong></div>
                 </div>
               </button>
             ))}
+            {!productsLoading && !products.length && <div className="cashier-empty-products"><Coffee size={27} /><strong>Chưa tìm thấy món phù hợp</strong><span>Thử từ khóa khác hoặc chọn danh mục khác.</span></div>}
           </div>
         </main>
-        <aside className="border-l border-black/5 bg-white p-4">
+        <aside className="cashier-cart border-l border-black/5 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-semibold text-espresso">Đơn hàng hiện tại</div>
@@ -323,7 +363,9 @@ export default function POSPage() {
               <div key={i.key} className="rounded-xl bg-[#f8f5ef] p-3">
                 <div className="flex justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold">{productLabel(i.name)}</div>
+                    <button className="cashier-cart-item-name" onClick={() => editCartItem(i)} title="Sửa lựa chọn món">
+                      <span className="truncate">{productLabel(i.name)}</span><Pencil size={12} />
+                    </button>
                     <div className="mt-0.5 text-[11px] text-charcoal/45">
                       {i.sizeName ? `Cỡ ${i.sizeName}` : 'Tiêu chuẩn'} · {i.sugarLevel}% đường ·{' '}
                       {iceLabel(i.iceLevel)}
@@ -399,14 +441,14 @@ export default function POSPage() {
           )}
         </aside>
       </div>
-      <Modal
+      <Modal rootClassName="cashier-modal-root cashier-custom-modal"
         title={custom ? productLabel(custom.name) : 'Tùy chỉnh sản phẩm'}
         open={Boolean(custom)}
-        onCancel={() => setCustom(null)}
+        onCancel={() => { setCustom(null); setEditingKey(null); }}
         onOk={addItem}
-        okText="Thêm vào đơn"
+        okText={`${editingKey ? 'Cập nhật món' : 'Thêm vào đơn'} · ${money(customTotalPrice)}`}
         cancelText="Hủy"
-        width={560}
+        width={600}
       >
         {custom && (
           <div>
@@ -417,6 +459,11 @@ export default function POSPage() {
               <div className="mt-1 text-sm text-charcoal/50">
                 {productDescriptionLabel(custom.description, custom.name)}
               </div>
+            </div>
+            <div className="cashier-custom-price-summary">
+              <div><span>Đơn giá tùy chọn</span><strong>{money(customUnitPrice)}</strong></div>
+              <div><span>Số lượng</span><strong>× {customData.quantity}</strong></div>
+              <div className="cashier-custom-grand"><span>Tổng món này</span><strong>{money(customTotalPrice)}</strong></div>
             </div>
             {custom.sizes?.length > 0 && (
               <div className="mt-5">
@@ -433,7 +480,7 @@ export default function POSPage() {
                 </Radio.Group>
               </div>
             )}
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
               <div>
                 <div className="mb-2 text-sm font-semibold">Đường</div>
                 <Select
@@ -480,14 +527,17 @@ export default function POSPage() {
                 <InputNumber
                   min={1}
                   max={20}
+                  precision={0}
                   className="w-full"
                   value={customData.quantity}
-                  onChange={(v) => setCustomData((x) => ({ ...x, quantity: v || 1 }))}
+                  onChange={(v) => setCustomData((x) => ({ ...x, quantity: Math.max(1, Math.min(20, Number(v) || 1)) }))}
                 />
               </div>
               <div>
                 <div className="mb-2 text-sm font-semibold">Ghi chú</div>
                 <Input
+                  showCount
+                  maxLength={160}
                   value={customData.note}
                   onChange={(e) => setCustomData((x) => ({ ...x, note: e.target.value }))}
                   placeholder="Ví dụ: nóng hơn, ít ngọt..."
@@ -497,7 +547,7 @@ export default function POSPage() {
           </div>
         )}
       </Modal>
-      <Modal
+      <Modal rootClassName="cashier-modal-root"
         title="Thanh toán"
         open={payOpen}
         onCancel={() => setPayOpen(false)}

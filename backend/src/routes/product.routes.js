@@ -9,12 +9,12 @@ r.get('/:id', c.detail);
 r.post(
   '/',
   protect,
-  authorize('ADMIN', 'MANAGER'),
+  authorize('ADMIN'),
   upload.single('imageFile'),
   productRules,
   validate,
   c.create,
 );
-r.put('/:id', protect, authorize('ADMIN', 'MANAGER'), upload.single('imageFile'), c.update);
+r.put('/:id', protect, authorize('ADMIN'), upload.single('imageFile'), c.update);
 r.delete('/:id', protect, authorize('ADMIN'), c.remove);
 module.exports = r;

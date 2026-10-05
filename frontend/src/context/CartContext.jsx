@@ -21,13 +21,14 @@ export function CartProvider({ children }) {
       items,
       count: items.reduce((sum, item) => sum + item.quantity, 0),
       subtotal: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      add: (product) =>
+      add: (product, quantity = 1) =>
         setItems((current) => {
-          const key = String(product.id);
+          const optionKey = `${product.sizeId || ''}:${[...(product.addonIds || [])].map(String).sort().join(',')}`;
+          const key = `${product.id}:${optionKey}`;
           const found = current.find((item) => item.key === key);
           return found
             ? current.map((item) =>
-                item.key === key ? { ...item, quantity: item.quantity + 1 } : item,
+                item.key === key ? { ...item, quantity: Math.min(99, item.quantity + quantity) } : item,
               )
             : [
                 ...current,
@@ -37,7 +38,11 @@ export function CartProvider({ children }) {
                   name: product.name,
                   image: product.image,
                   price: Number(product.price || 0),
-                  quantity: 1,
+                  quantity: Math.min(99, quantity),
+                  sizeId: product.sizeId || null,
+                  sizeName: product.sizeName || '',
+                  addonIds: product.addonIds || [],
+                  addonNames: product.addonNames || [],
                 },
               ];
         }),

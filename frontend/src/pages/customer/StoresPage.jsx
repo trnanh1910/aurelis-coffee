@@ -35,18 +35,19 @@ export default function StoresPage() {
         <img src={heroImage || photos[0]} alt="Không gian cà phê ấm áp" />
         <div />
         <div className="stores-hero-copy">
-          <span className="lux-eyebrow">A PLACE TO PAUSE</span>
+          <span className="lux-eyebrow">A HIDDEN SANCTUARY</span>
           <h1 className="brand-display">
-            Một góc quen
+            Nơi thời gian
             <br />
-            <em>đang chờ bạn.</em>
+            <em>dừng bước.</em>
           </h1>
           <p>
-            Mỗi cửa hàng Aurelis là một khoảng lặng ấm áp, nơi cà phê ngon và những cuộc gặp gỡ tìm
-            thấy nhau.
+            Giữa nhịp sống hối hả, mỗi không gian Aurelis mở ra một chốn trú ẩn an yên và mướt xanh.
+            Nơi nghệ thuật kiến trúc, dải hương vị tuyệt mĩ và những tâm hồn đồng điệu cùng hòa
+            chung một nhịp đập.
           </p>
           <a className="lux-button lux-button-light" href="#our-stores">
-            Tìm không gian gần bạn <ArrowRight size={16} />
+            Khám phá chốn dừng chân <ArrowRight size={16} />
           </a>
         </div>
       </section>
@@ -55,7 +56,10 @@ export default function StoresPage() {
           <div>
             <span className="lux-eyebrow">GẶP GỠ AURELIS</span>
             <h2 className="brand-display">Không gian của chúng tôi</h2>
-            <p>Chọn điểm dừng chân, chúng tôi sẽ giữ sẵn một tách cà phê cho bạn.</p>
+            <p>
+              Chỉ cần bạn chọn nơi dừng bước, mọi sự tận tâm và một tách cà phê tuyệt mĩ nhất đã
+              luôn sẵn sàng chờ đợi.
+            </p>
           </div>
           <span className="catalog-count">{stores.length} ĐỊA ĐIỂM</span>
         </div>

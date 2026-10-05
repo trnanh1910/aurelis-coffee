@@ -1,125 +1,56 @@
-import { DollarSign, ReceiptText, Coffee, UsersRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ArrowRight, Coffee, DollarSign, RefreshCw, ReceiptText, UsersRound } from 'lucide-react';
 import api from '../../api/axiosClient';
 import { productLabel, statusLabel } from '../../utils/viLabels';
-const money = (v) => new Intl.NumberFormat('vi-VN').format(Number(v || 0)) + ' ₫';
+
+const money = (value) => `${new Intl.NumberFormat('vi-VN').format(Number(value || 0))} ₫`;
+const dayLabel = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' }).format(date);
+};
+
 export default function DashboardPage() {
-  const [data, setData] = useState(null),
-    [rev, setRev] = useState([]),
-    [error, setError] = useState('');
-  useEffect(() => {
-    Promise.all([api.get('/dashboard/overview'), api.get('/dashboard/revenue?days=7')])
-      .then(([a, b]) => {
-        setData(a.data.data);
-        setRev(b.data.data);
-      })
-      .catch((e) =>
-        setError(e.response?.data?.message || 'Không thể tải dữ liệu bảng điều khiển.'),
-      );
+  const [data, setData] = useState(null);
+  const [revenue, setRevenue] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [overview, trend] = await Promise.all([
+        api.get('/dashboard/overview'),
+        api.get('/dashboard/revenue?days=7'),
+      ]);
+      setData(overview.data.data);
+      setRevenue(trend.data.data || []);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Không thể tải dữ liệu bảng điều khiển.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
-  if (error) return <div className="premium-card p-8">{error}</div>;
-  if (!data) return <div className="py-20 text-center">Đang tải bảng điều khiển...</div>;
+  useEffect(() => { load(); }, [load]);
+
+  if (error) return <div className="admin-dashboard-state"><span className="admin-page-eyebrow">AURELIS · BUSINESS INTELLIGENCE</span><h1 className="brand-display">Chưa thể tải tổng quan</h1><p>{error}</p><button onClick={load}><RefreshCw size={15} /> Thử tải lại</button></div>;
+  if (!data) return <div className="admin-dashboard-state"><RefreshCw className={loading ? 'is-spinning' : ''} size={19} /><p>Đang tải dữ liệu tổng quan...</p></div>;
+
   const cards = [
-    ['Doanh thu hôm nay', money(data.todayRevenue), DollarSign],
-    ['Đơn hàng hôm nay', data.todayOrders, ReceiptText],
-    ['Khách hàng', data.customers, UsersRound],
-    ['Giá trị đơn trung bình', money(data.averageOrderValue), Coffee],
+    ['Doanh thu hôm nay', money(data.todayRevenue), DollarSign, 'Theo đơn đã ghi nhận'],
+    ['Đơn hàng hôm nay', data.todayOrders || 0, ReceiptText, 'Tất cả trạng thái'],
+    ['Khách hàng', data.customers || 0, UsersRound, 'Hồ sơ thành viên'],
+    ['Giá trị đơn trung bình', money(data.averageOrderValue), Coffee, 'Theo kỳ hiện tại'],
   ];
-  return (
-    <div>
-      <div>
-        <h1 className="brand-display text-3xl text-espresso">Tổng quan</h1>
-        <p className="mt-1 text-sm text-charcoal/50">
-          Tổng quan về hoạt động kinh doanh trong ngày
-        </p>
-      </div>
-      <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map(([k, v, Icon]) => (
-          <div key={k} className="premium-card p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-charcoal/50">{k}</span>
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-cream text-coffee">
-                <Icon size={18} />
-              </span>
-            </div>
-            <div className="mt-5 text-2xl font-semibold text-espresso">{v}</div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.7fr_1fr]">
-        <div className="premium-card p-6">
-          <div className="font-semibold">Tổng quan doanh thu</div>
-          <div className="mt-6 h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={rev}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} width={75} />
-                <Tooltip formatter={(v) => money(v)} />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#5C4033"
-                  fill="#F4EFE7"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="premium-card p-6">
-          <div className="font-semibold">Sản phẩm bán chạy</div>
-          <div className="mt-5 space-y-4">
-            {data.topProducts.map((p, i) => (
-              <div key={p.name} className="flex items-center gap-3">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-cream text-xs font-bold text-coffee">
-                  {i + 1}
-                </div>
-                <div>
-                  <div className="text-sm font-medium">{productLabel(p.name)}</div>
-                  <div className="text-xs text-charcoal/45">Đã bán {p.quantity} sản phẩm</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="premium-card mt-5 overflow-hidden">
-        <div className="border-b border-black/5 p-5 font-semibold">Đơn hàng gần đây</div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[#faf8f4] text-xs uppercase tracking-wide text-charcoal/45">
-              <tr>
-                <th className="p-4">Đơn hàng</th>
-                <th>Khách hàng</th>
-                <th>Chi nhánh</th>
-                <th>Trạng thái</th>
-                <th className="pr-4 text-right">Tổng tiền</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.recentOrders.map((o) => (
-                <tr key={o.id} className="border-t border-black/5">
-                  <td className="p-4 font-semibold">{o.order_code}</td>
-                  <td>{o.customer_name === 'Walk-in' ? 'Khách vãng lai' : o.customer_name}</td>
-                  <td>{o.branch_name}</td>
-                  <td>{statusLabel(o.status)}</td>
-                  <td className="pr-4 text-right font-medium">{money(o.total_amount)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+
+  return <div className="admin-dashboard">
+    <div className="admin-page-heading"><div><span className="admin-page-eyebrow">AURELIS · BUSINESS INTELLIGENCE</span><h1 className="brand-display">Tổng quan</h1><p>Tình hình hoạt động kinh doanh trong ngày</p></div><button className="admin-refresh-button" onClick={load} disabled={loading}><RefreshCw size={15} className={loading ? 'is-spinning' : ''} /> Làm mới dữ liệu</button></div>
+    <div className="admin-stat-grid">{cards.map(([label, value, Icon, note], index) => <article className="admin-stat-card" key={label}><div className="admin-stat-top"><span>{label}</span><i className={`admin-stat-icon tone-${index}`}><Icon size={17} /></i></div><strong>{value}</strong><small>{note}</small><span className="admin-stat-index">0{index + 1}</span></article>)}</div>
+    <div className="admin-dashboard-grid">
+      <section className="premium-card admin-chart-card"><div className="admin-section-heading"><div><span className="admin-page-eyebrow">BẢY NGÀY GẦN NHẤT</span><h2>Doanh thu</h2></div><span className="admin-chart-total">{money(revenue.reduce((sum, item) => sum + Number(item.revenue || 0), 0))}</span></div><div className="admin-chart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={revenue} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}><defs><linearGradient id="aurelisRevenueFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#9b7a52" stopOpacity={0.25} /><stop offset="95%" stopColor="#9b7a52" stopOpacity={0.015} /></linearGradient></defs><CartesianGrid stroke="#eee8df" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="date" tickFormatter={dayLabel} tick={{ fontSize: 9, fill: '#9c907f' }} axisLine={false} tickLine={false} /><YAxis tickFormatter={(value) => value >= 1000000 ? `${(value / 1000000).toFixed(1)}tr` : `${Math.round(value / 1000)}k`} tick={{ fontSize: 9, fill: '#9c907f' }} axisLine={false} tickLine={false} width={45} /><Tooltip formatter={(value) => money(value)} labelFormatter={dayLabel} contentStyle={{ border: '1px solid #e5dbcf', borderRadius: 2, background: '#fffdf9', fontSize: 10 }} /><Area type="monotone" dataKey="revenue" name="Doanh thu" stroke="#81613f" fill="url(#aurelisRevenueFill)" strokeWidth={2.5} activeDot={{ r: 4, fill: '#81613f', stroke: '#fffdf9', strokeWidth: 2 }} /></AreaChart></ResponsiveContainer></div></section>
+      <section className="premium-card admin-top-products"><div className="admin-section-heading"><div><span className="admin-page-eyebrow">ĐƯỢC YÊU THÍCH</span><h2>Sản phẩm bán chạy</h2></div><Coffee size={17} /></div>{data.topProducts?.length ? <div className="admin-top-product-list">{data.topProducts.map((product, index) => <div className="admin-top-product" key={`${product.name}-${index}`}><span className="admin-top-product-rank">{String(index + 1).padStart(2, '0')}</span><div><strong>{productLabel(product.name)}</strong><small>Đã bán {product.quantity} sản phẩm</small></div><ArrowRight size={14} /></div>)}</div> : <div className="admin-inline-empty">Chưa có dữ liệu sản phẩm trong kỳ này.</div>}</section>
     </div>
-  );
+    <section className="premium-card admin-recent-orders"><div className="admin-section-heading"><div><span className="admin-page-eyebrow">HOẠT ĐỘNG MỚI NHẤT</span><h2>Đơn hàng gần đây</h2></div><Link to="/admin/orders">Tất cả đơn hàng <ArrowRight size={14} /></Link></div><div className="overflow-x-auto"><table className="admin-data-table"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Chi nhánh</th><th>Trạng thái</th><th className="text-right">Tổng tiền</th></tr></thead><tbody>{(data.recentOrders || []).map((order) => <tr key={order.id}><td><strong>{order.order_code}</strong></td><td>{order.customer_name === 'Walk-in' ? 'Khách vãng lai' : order.customer_name}</td><td>{order.branch_name}</td><td><span className={`admin-order-status status-${String(order.status).toLowerCase()}`}><i />{statusLabel(order.status)}</span></td><td className="text-right"><strong>{money(order.total_amount)}</strong></td></tr>)}{!data.recentOrders?.length && <tr><td colSpan="5" className="admin-table-empty">Chưa có đơn hàng gần đây.</td></tr>}</tbody></table></div></section>
+  </div>;
 }

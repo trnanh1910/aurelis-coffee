@@ -22,6 +22,8 @@ import StoresPage from '../pages/customer/StoresPage';
 import StoryPage from '../pages/customer/StoryPage';
 import ReservationPage from '../pages/customer/ReservationPage';
 import CartPage from '../pages/customer/CartPage';
+import ProductDetailPage from '../pages/customer/ProductDetailPage';
+import CustomerOrdersPage from '../pages/customer/OrdersPage';
 import UsersPage from '../pages/admin/UsersPage';
 import BaristaPage from '../pages/staff/BaristaPage';
 import POSPage from '../pages/staff/POSPage';
@@ -34,10 +36,14 @@ export default function AppRoutes() {
       <Route element={<CustomerLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/menu" element={<MenuPage />} />
+        <Route path="/menu/:id" element={<ProductDetailPage />} />
         <Route path="/story" element={<StoryPage />} />
         <Route path="/stores" element={<StoresPage />} />
         <Route path="/reservation" element={<ReservationPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route element={<ProtectedRoute roles={['CUSTOMER']} />}>
+          <Route path="/orders" element={<CustomerOrdersPage />} />
+        </Route>
       </Route>
       <Route
         path="/login"
@@ -76,8 +82,10 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute roles={['ADMIN', 'MANAGER']} />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="categories" element={<CategoriesPage />} />
+          <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+            <Route path="products" element={<ProductsPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
+          </Route>
           <Route path="orders" element={<OrdersPage />} />
           <Route path="tables" element={<TablesPage />} />
           <Route path="branches" element={<BranchesPage />} />
