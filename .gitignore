@@ -1,4 +1,6 @@
+
 node_modules/
+
 
 .env
 .env.local
@@ -7,15 +9,19 @@ node_modules/
 .env.test
 .env.*.local
 
+
 !.env.example
+
 
 frontend/dist/
 backend/dist/
 dist/
 build/
 
-backend/uploads/*
-!backend/uploads/.gitkeep
+
+# backend/uploads/*        <- XÓA DÒNG NÀY
+# !backend/uploads/.gitkeep <- XÓA DÒNG NÀY
+
 
 *.log
 npm-debug.log*
@@ -25,6 +31,7 @@ pnpm-debug.log*
 
 .vscode/
 .idea/
+
 
 .DS_Store
 Thumbs.db
